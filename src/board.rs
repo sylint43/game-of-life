@@ -123,7 +123,7 @@ impl Display for Board {
             .iter()
             .map(|row| {
                 row.iter()
-                    .map(|state| format!("{}", state))
+                    .map(|state| state.to_string())
                     .collect::<Vec<String>>()
                     .join("")
             })
