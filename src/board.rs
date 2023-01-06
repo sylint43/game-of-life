@@ -39,7 +39,7 @@ pub struct Board(Vec<Vec<State>>);
 
 impl Board {
     pub fn dead_state(width: usize, height: usize) -> Self {
-        Self(vec![vec![State::Dead; width]; height])
+        Self(vec![vec![State::Dead; height]; width])
     }
 
     pub fn random_state(width: usize, height: usize) -> Self {
