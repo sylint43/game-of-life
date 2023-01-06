@@ -39,7 +39,7 @@ pub struct Board(Vec<Vec<State>>);
 
 impl Board {
     pub fn dead_state(width: usize, height: usize) -> Self {
-        Self(vec![vec![State::Dead; height]; width])
+        Self(vec![vec![State::Dead; width]; height])
     }
 
     pub fn random_state(width: usize, height: usize) -> Self {
@@ -58,13 +58,13 @@ impl Board {
     }
 
     pub fn next_board_state(&self) -> Self {
-        let width = self.0.len();
-        let height = self.0[0].len();
+        let height = self.0.len();
+        let width = self.0[0].len();
         let mut next_state = Board::dead_state(width, height);
 
         for x in 0..width {
             for y in 0..height {
-                next_state.0[x][y] = self
+                next_state.0[y][x] = self
                     .next_cell_state((x as isize, y as isize), (width as isize, height as isize));
             }
         }
@@ -87,13 +87,13 @@ impl Board {
                     continue;
                 }
 
-                if self.0[i as usize][j as usize] == State::Alive {
+                if self.0[j as usize][i as usize] == State::Alive {
                     live_neighbours += 1;
                 }
             }
         }
 
-        match self.0[x as usize][y as usize] {
+        match self.0[y as usize][x as usize] {
             State::Alive => match live_neighbours {
                 2 | 3 => State::Alive,
                 _ => State::Dead,
