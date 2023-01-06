@@ -17,7 +17,7 @@
 use rand::Rng;
 use std::fmt::Display;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum State {
     Alive,
     Dead,
@@ -34,7 +34,7 @@ impl Display for State {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Board(Vec<Vec<State>>);
 
 impl Board {
@@ -176,6 +176,23 @@ mod tests {
         let expected_state = Board(vec![
             vec![State::Dead, State::Alive, State::Alive],
             vec![State::Dead, State::Alive, State::Alive],
+            vec![State::Dead, State::Dead, State::Dead],
+        ]);
+        let next_state = inital_state.next_board_state();
+
+        assert!(next_state == expected_state);
+    }
+
+    #[test]
+    fn test_should_die_and_come_alive() {
+        let inital_state = Board(vec![
+            vec![State::Alive, State::Alive, State::Alive],
+            vec![State::Dead, State::Alive, State::Alive],
+            vec![State::Dead, State::Dead, State::Dead],
+        ]);
+        let expected_state = Board(vec![
+            vec![State::Alive, State::Dead, State::Alive],
+            vec![State::Alive, State::Dead, State::Alive],
             vec![State::Dead, State::Dead, State::Dead],
         ]);
         let next_state = inital_state.next_board_state();
