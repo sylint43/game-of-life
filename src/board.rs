@@ -15,12 +15,25 @@
 // You should have received a copy of the GNU General Public License
 // along with game_of_life.  If not, see <http://www.gnu.org/licenses/>.
 
+use itertools::Itertools;
 use rand::Rng;
+use std::fmt::Display;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum State {
     Alive,
     Dead,
+}
+
+impl Display for State {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let ch = match self {
+            State::Alive => '\u{2588}',
+            State::Dead => ' ',
+        };
+
+        write!(f, "{0}{0}", ch)
+    }
 }
 
 pub struct Board(Vec<Vec<State>>);
@@ -36,13 +49,26 @@ impl Board {
 
         for row in board.0.iter_mut() {
             for state in row.iter_mut() {
-                if rng.gen() {
+                if rng.gen::<f32>() > 0.85 {
                     *state = State::Alive;
                 }
             }
         }
 
         board
+    }
+}
+
+impl Display for Board {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let print = self
+            .0
+            .iter()
+            .map(|row| row.iter().map(|state| format!("{}", state)).join(""))
+            .collect::<Vec<String>>()
+            .join("\n");
+
+        write!(f, "{}", print)
     }
 }
 
