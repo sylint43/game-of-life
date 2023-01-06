@@ -15,6 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with game_of_life.  If not, see <http://www.gnu.org/licenses/>.
 
+use rand::random;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum State {
     Alive,
@@ -26,6 +28,20 @@ pub struct Board(Vec<Vec<State>>);
 impl Board {
     pub fn dead_state(width: usize, height: usize) -> Self {
         Self(vec![vec![State::Dead; width]; height])
+    }
+
+    pub fn random_state(width: usize, height: usize) -> Self {
+        let mut board = Self::dead_state(width, height);
+
+        for row in board.0.iter_mut() {
+            for state in row.iter_mut() {
+                if random() {
+                    *state = State::Alive;
+                }
+            }
+        }
+
+        board
     }
 }
 
@@ -40,5 +56,14 @@ mod tests {
             .0
             .iter()
             .all(|row| row.iter().all(|state| *state == State::Dead)))
+    }
+
+    #[test]
+    fn test_random_state() {
+        let random_state = Board::random_state(3, 3);
+        assert!(random_state
+            .0
+            .iter()
+            .any(|row| row.iter().any(|state| *state == State::Alive)))
     }
 }
