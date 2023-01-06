@@ -57,25 +57,22 @@ impl Board {
         board
     }
 
-    pub fn next_board_state(self) -> Self {
+    pub fn next_board_state(&self) -> Self {
         let width = self.0.len();
         let height = self.0[0].len();
         let mut next_state = Board::dead_state(width, height);
 
         for x in 0..width {
             for y in 0..height {
-                next_state.0[x][y] = Board::next_cell_state(
-                    (x as isize, y as isize),
-                    (width as isize, height as isize),
-                    &self,
-                );
+                next_state.0[x][y] = self
+                    .next_cell_state((x as isize, y as isize), (width as isize, height as isize));
             }
         }
 
         next_state
     }
 
-    fn next_cell_state(coords: (isize, isize), size: (isize, isize), state: &Board) -> State {
+    fn next_cell_state(&self, coords: (isize, isize), size: (isize, isize)) -> State {
         let (x, y) = coords;
         let (width, height) = size;
         let mut live_neighbours = 0;
@@ -90,13 +87,13 @@ impl Board {
                     continue;
                 }
 
-                if state.0[i as usize][j as usize] == State::Alive {
+                if self.0[i as usize][j as usize] == State::Alive {
                     live_neighbours += 1;
                 }
             }
         }
 
-        match state.0[x as usize][y as usize] {
+        match self.0[x as usize][y as usize] {
             State::Alive => match live_neighbours {
                 2 | 3 => State::Alive,
                 _ => State::Dead,
