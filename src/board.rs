@@ -78,7 +78,7 @@ impl Board {
 
     fn next_cell_state(&self, coords: (usize, usize)) -> Cell {
         let (x, y) = coords;
-        let live_neighbours = self.count_neighbours((x as isize, y as isize));
+        let live_neighbours = self.count_live_neighbours((x as isize, y as isize));
 
         match self.state[y][x] {
             Cell::Alive => match live_neighbours {
@@ -92,7 +92,7 @@ impl Board {
         }
     }
 
-    fn count_neighbours(&self, coords: (isize, isize)) -> u32 {
+    fn count_live_neighbours(&self, coords: (isize, isize)) -> u32 {
         let (x, y) = coords;
         let (width, height) = (self.size.0 as isize, self.size.1 as isize);
         let mut live_neighbours = 0;
