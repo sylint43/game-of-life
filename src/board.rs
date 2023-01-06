@@ -34,6 +34,7 @@ impl Display for State {
     }
 }
 
+#[derive(PartialEq, Eq)]
 pub struct Board(Vec<Vec<State>>);
 
 impl Board {
@@ -54,6 +55,57 @@ impl Board {
         }
 
         board
+    }
+
+    pub fn next_board_state(self) -> Self {
+        let width = self.0.len();
+        let height = self.0[0].len();
+        let mut next_state = Board::dead_state(width, height);
+
+        for x in 0..width {
+            for y in 0..height {
+                next_state.0[x][y] = Board::next_cell_state(
+                    (x as isize, y as isize),
+                    (width as isize, height as isize),
+                    &self,
+                );
+            }
+        }
+
+        next_state
+    }
+
+    fn next_cell_state(coords: (isize, isize), size: (isize, isize), state: &Board) -> State {
+        let (x, y) = coords;
+        let (width, height) = size;
+        let mut live_neighbours = 0;
+
+        for i in x - 1..=x + 1 {
+            if i < 0 || i >= width {
+                continue;
+            }
+
+            for j in y - 1..=y + 1 {
+                if (j < 0 || j >= height) || (x == i && y == j) {
+                    continue;
+                }
+
+                if state.0[i as usize][j as usize] == State::Alive {
+                    live_neighbours += 1;
+                }
+            }
+        }
+
+        match state.0[x as usize][y as usize] {
+            State::Alive => match live_neighbours {
+                2 | 3 => State::Alive,
+                _ => State::Dead,
+            },
+            State::Dead => match live_neighbours {
+                3 => State::Alive,
+                _ => State::Dead,
+            },
+        }
     }
 }
 
@@ -95,5 +147,39 @@ mod tests {
             .0
             .iter()
             .any(|row| row.iter().any(|state| *state == State::Alive)))
+    }
+
+    #[test]
+    fn test_dead_stay_dead() {
+        let inital_state = Board(vec![
+            vec![State::Dead, State::Dead, State::Dead],
+            vec![State::Dead, State::Dead, State::Dead],
+            vec![State::Dead, State::Dead, State::Dead],
+        ]);
+        let expected_state = Board(vec![
+            vec![State::Dead, State::Dead, State::Dead],
+            vec![State::Dead, State::Dead, State::Dead],
+            vec![State::Dead, State::Dead, State::Dead],
+        ]);
+        let next_state = inital_state.next_board_state();
+
+        assert!(next_state == expected_state);
+    }
+
+    #[test]
+    fn test_should_come_alive() {
+        let inital_state = Board(vec![
+            vec![State::Dead, State::Dead, State::Alive],
+            vec![State::Dead, State::Alive, State::Alive],
+            vec![State::Dead, State::Dead, State::Dead],
+        ]);
+        let expected_state = Board(vec![
+            vec![State::Dead, State::Alive, State::Alive],
+            vec![State::Dead, State::Alive, State::Alive],
+            vec![State::Dead, State::Dead, State::Dead],
+        ]);
+        let next_state = inital_state.next_board_state();
+
+        assert!(next_state == expected_state);
     }
 }
