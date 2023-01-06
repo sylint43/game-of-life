@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with game_of_life.  If not, see <http://www.gnu.org/licenses/>.
 
-use rand::random;
+use rand::Rng;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum State {
@@ -32,10 +32,11 @@ impl Board {
 
     pub fn random_state(width: usize, height: usize) -> Self {
         let mut board = Self::dead_state(width, height);
+        let mut rng = rand::thread_rng();
 
         for row in board.0.iter_mut() {
             for state in row.iter_mut() {
-                if random() {
+                if rng.gen() {
                     *state = State::Alive;
                 }
             }
