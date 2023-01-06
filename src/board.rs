@@ -14,8 +14,6 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with game_of_life.  If not, see <http://www.gnu.org/licenses/>.
-
-use itertools::Itertools;
 use rand::Rng;
 use std::fmt::Display;
 
@@ -64,7 +62,12 @@ impl Display for Board {
         let print = self
             .0
             .iter()
-            .map(|row| row.iter().map(|state| format!("{}", state)).join(""))
+            .map(|row| {
+                row.iter()
+                    .map(|state| format!("{}", state))
+                    .collect::<Vec<String>>()
+                    .join("")
+            })
             .collect::<Vec<String>>()
             .join("\n");
 
