@@ -18,16 +18,16 @@ use rand::Rng;
 use std::fmt::Display;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum State {
+pub enum Cell {
     Alive,
     Dead,
 }
 
-impl Display for State {
+impl Display for Cell {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let ch = match self {
-            State::Alive => '\u{2588}',
-            State::Dead => ' ',
+            Cell::Alive => '\u{2588}',
+            Cell::Dead => ' ',
         };
 
         write!(f, "{0}{0}", ch)
@@ -35,21 +35,27 @@ impl Display for State {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct Board(Vec<Vec<State>>);
+pub struct Board {
+    size: (usize, usize),
+    state: Vec<Vec<Cell>>,
+}
 
 impl Board {
     pub fn dead_state(width: usize, height: usize) -> Self {
-        Self(vec![vec![State::Dead; width]; height])
+        Self {
+            size: (width, height),
+            state: vec![vec![Cell::Dead; width]; height],
+        }
     }
 
     pub fn random_state(width: usize, height: usize) -> Self {
         let mut board = Self::dead_state(width, height);
         let mut rng = rand::thread_rng();
 
-        for row in board.0.iter_mut() {
-            for state in row.iter_mut() {
+        for row in board.state.iter_mut() {
+            for cell in row.iter_mut() {
                 if rng.gen::<f32>() > 0.85 {
-                    *state = State::Alive;
+                    *cell = Cell::Alive;
                 }
             }
         }
@@ -58,49 +64,47 @@ impl Board {
     }
 
     pub fn next_board_state(&self) -> Self {
-        let height = self.0.len();
-        let width = self.0[0].len();
+        let (width, height) = self.size;
         let mut next_state = Board::dead_state(width, height);
 
-        for x in 0..width {
-            for y in 0..height {
-                next_state.0[y][x] = self
-                    .next_cell_state((x as isize, y as isize), (width as isize, height as isize));
+        for row in 0..height {
+            for col in 0..width {
+                next_state.state[row][col] = self.next_cell_state((col as isize, row as isize));
             }
         }
 
         next_state
     }
 
-    fn next_cell_state(&self, coords: (isize, isize), size: (isize, isize)) -> State {
+    fn next_cell_state(&self, coords: (isize, isize)) -> Cell {
         let (x, y) = coords;
-        let (width, height) = size;
+        let (width, height) = (self.size.0 as isize, self.size.1 as isize);
         let mut live_neighbours = 0;
 
-        for i in x - 1..=x + 1 {
-            if i < 0 || i >= width {
+        for row in y - 1..=y + 1 {
+            if row < 0 || row >= height {
                 continue;
             }
 
-            for j in y - 1..=y + 1 {
-                if (j < 0 || j >= height) || (x == i && y == j) {
+            for col in x - 1..=x + 1 {
+                if (col < 0 || col >= width) || (x == col && y == row) {
                     continue;
                 }
 
-                if self.0[j as usize][i as usize] == State::Alive {
+                if self.state[row as usize][col as usize] == Cell::Alive {
                     live_neighbours += 1;
                 }
             }
         }
 
-        match self.0[y as usize][x as usize] {
-            State::Alive => match live_neighbours {
-                2 | 3 => State::Alive,
-                _ => State::Dead,
+        match self.state[y as usize][x as usize] {
+            Cell::Alive => match live_neighbours {
+                2 | 3 => Cell::Alive,
+                _ => Cell::Dead,
             },
-            State::Dead => match live_neighbours {
-                3 => State::Alive,
-                _ => State::Dead,
+            Cell::Dead => match live_neighbours {
+                3 => Cell::Alive,
+                _ => Cell::Dead,
             },
         }
     }
@@ -109,7 +113,7 @@ impl Board {
 impl Display for Board {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let print = self
-            .0
+            .state
             .iter()
             .map(|row| {
                 row.iter()
@@ -132,32 +136,38 @@ mod tests {
     fn test_dead_state() {
         let dead_state = Board::dead_state(4, 4);
         assert!(dead_state
-            .0
+            .state
             .iter()
-            .all(|row| row.iter().all(|state| *state == State::Dead)))
+            .all(|row| row.iter().all(|state| *state == Cell::Dead)))
     }
 
     #[test]
     fn test_random_state() {
         let random_state = Board::random_state(3, 3);
         assert!(random_state
-            .0
+            .state
             .iter()
-            .any(|row| row.iter().any(|state| *state == State::Alive)))
+            .any(|row| row.iter().any(|state| *state == Cell::Alive)))
     }
 
     #[test]
     fn test_dead_stay_dead() {
-        let inital_state = Board(vec![
-            vec![State::Dead, State::Dead, State::Dead],
-            vec![State::Dead, State::Dead, State::Dead],
-            vec![State::Dead, State::Dead, State::Dead],
-        ]);
-        let expected_state = Board(vec![
-            vec![State::Dead, State::Dead, State::Dead],
-            vec![State::Dead, State::Dead, State::Dead],
-            vec![State::Dead, State::Dead, State::Dead],
-        ]);
+        let inital_state = Board {
+            state: vec![
+                vec![Cell::Dead, Cell::Dead, Cell::Dead],
+                vec![Cell::Dead, Cell::Dead, Cell::Dead],
+                vec![Cell::Dead, Cell::Dead, Cell::Dead],
+            ],
+            size: (3, 3),
+        };
+        let expected_state = Board {
+            state: vec![
+                vec![Cell::Dead, Cell::Dead, Cell::Dead],
+                vec![Cell::Dead, Cell::Dead, Cell::Dead],
+                vec![Cell::Dead, Cell::Dead, Cell::Dead],
+            ],
+            size: (3, 3),
+        };
         let next_state = inital_state.next_board_state();
 
         assert!(next_state == expected_state);
@@ -165,16 +175,22 @@ mod tests {
 
     #[test]
     fn test_should_come_alive() {
-        let inital_state = Board(vec![
-            vec![State::Dead, State::Dead, State::Alive],
-            vec![State::Dead, State::Alive, State::Alive],
-            vec![State::Dead, State::Dead, State::Dead],
-        ]);
-        let expected_state = Board(vec![
-            vec![State::Dead, State::Alive, State::Alive],
-            vec![State::Dead, State::Alive, State::Alive],
-            vec![State::Dead, State::Dead, State::Dead],
-        ]);
+        let inital_state = Board {
+            state: vec![
+                vec![Cell::Dead, Cell::Dead, Cell::Alive],
+                vec![Cell::Dead, Cell::Alive, Cell::Alive],
+                vec![Cell::Dead, Cell::Dead, Cell::Dead],
+            ],
+            size: (3, 3),
+        };
+        let expected_state = Board {
+            state: vec![
+                vec![Cell::Dead, Cell::Alive, Cell::Alive],
+                vec![Cell::Dead, Cell::Alive, Cell::Alive],
+                vec![Cell::Dead, Cell::Dead, Cell::Dead],
+            ],
+            size: (3, 3),
+        };
         let next_state = inital_state.next_board_state();
 
         assert!(next_state == expected_state);
@@ -182,16 +198,22 @@ mod tests {
 
     #[test]
     fn test_should_die_and_come_alive() {
-        let inital_state = Board(vec![
-            vec![State::Alive, State::Alive, State::Alive],
-            vec![State::Dead, State::Alive, State::Alive],
-            vec![State::Dead, State::Dead, State::Dead],
-        ]);
-        let expected_state = Board(vec![
-            vec![State::Alive, State::Dead, State::Alive],
-            vec![State::Alive, State::Dead, State::Alive],
-            vec![State::Dead, State::Dead, State::Dead],
-        ]);
+        let inital_state = Board {
+            state: vec![
+                vec![Cell::Alive, Cell::Alive, Cell::Alive],
+                vec![Cell::Dead, Cell::Alive, Cell::Alive],
+                vec![Cell::Dead, Cell::Dead, Cell::Dead],
+            ],
+            size: (3, 3),
+        };
+        let expected_state = Board {
+            state: vec![
+                vec![Cell::Alive, Cell::Dead, Cell::Alive],
+                vec![Cell::Alive, Cell::Dead, Cell::Alive],
+                vec![Cell::Dead, Cell::Dead, Cell::Dead],
+            ],
+            size: (3, 3),
+        };
         let next_state = inital_state.next_board_state();
 
         assert!(next_state == expected_state);
