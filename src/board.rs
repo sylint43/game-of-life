@@ -14,6 +14,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with game_of_life.  If not, see <http://www.gnu.org/licenses/>.
+use itertools::Itertools;
 use rand::Rng;
 use std::fmt::Display;
 
@@ -92,27 +93,19 @@ impl Board {
         }
     }
 
-    fn count_live_neighbours(&self, coords: (isize, isize)) -> u32 {
+    fn count_live_neighbours(&self, coords: (isize, isize)) -> usize {
         let (x, y) = coords;
         let (width, height) = (self.size.0 as isize, self.size.1 as isize);
-        let mut live_neighbours = 0;
 
-        for row in y - 1..=y + 1 {
-            if row < 0 || row >= height {
-                continue;
-            }
-
-            for col in x - 1..=x + 1 {
-                if (col < 0 || col >= width) || (x == col && y == row) {
-                    continue;
-                }
-
-                if self.state[row as usize][col as usize] == Cell::Alive {
-                    live_neighbours += 1;
-                }
-            }
-        }
-        live_neighbours
+        (y - 1..=y + 1)
+            .cartesian_product(x - 1..=x + 1)
+            .filter(|(row, col)| {
+                !((*col < 0 || *col >= width)
+                    || (*row < 0 || *row >= height)
+                    || (x == *col && y == *row))
+            })
+            .filter(|(row, col)| self.state[*row as usize][*col as usize] == Cell::Alive)
+            .count()
     }
 }
 
